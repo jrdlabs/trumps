@@ -5,16 +5,20 @@ export function normalizeRoomCode(value) {
 }
 
 export async function createRoom(displayName) {
-  const { data, error } = await supabase.rpc("trumps_create_room", { p_display_name: displayName.trim() }).single();
+  const name = typeof displayName === "string" ? displayName.trim() : "";
+  if (!name) throw new Error("Please enter your name.");
+  const { data, error } = await supabase.rpc("trumps_create_room", { p_display_name: name }).single();
   if (error) throw error;
   const room = { id: data.room_id, code: data.room_code, seat: data.seat };
   return room;
 }
 
 export async function joinRoom(roomCode, displayName) {
+  const name = typeof displayName === "string" ? displayName.trim() : "";
+  if (!name) throw new Error("Please enter your name.");
   const { data, error } = await supabase.rpc("trumps_join_room", {
     p_room_code: normalizeRoomCode(roomCode),
-    p_display_name: displayName.trim(),
+    p_display_name: name,
   }).single();
   if (error) throw error;
   const room = { id: data.room_id, code: data.room_code, seat: data.seat };
