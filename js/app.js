@@ -94,17 +94,20 @@ joinCode.addEventListener("input", () => { joinCode.value = normalizeRoomCode(jo
 
 createForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const displayName = new FormData(createForm).get("displayName");
   setBusy(createForm, true);
-  try { await enterLobby(await createRoom(new FormData(createForm).get("displayName"))); }
+  try { await enterLobby(await createRoom(displayName)); }
   catch (error) { showToast(friendlyError(error)); }
   finally { setBusy(createForm, false); }
 });
 
 joinForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  setBusy(joinForm, true);
   const form = new FormData(joinForm);
-  try { await enterLobby(await joinRoom(form.get("roomCode"), form.get("displayName"))); }
+  const roomCode = form.get("roomCode");
+  const displayName = form.get("displayName");
+  setBusy(joinForm, true);
+  try { await enterLobby(await joinRoom(roomCode, displayName)); }
   catch (error) { showToast(friendlyError(error)); }
   finally { setBusy(joinForm, false); }
 });
