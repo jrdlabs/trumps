@@ -76,7 +76,7 @@ export function renderLobby({ room, players, currentUserId, onKick }) {
       row.append(tag);
     }
     const me = players.find((item) => item.user_id === currentUserId);
-    if (me?.is_host && player.user_id !== currentUserId) {
+    if (me?.is_host && player && player.user_id !== currentUserId) {
       const kick = document.createElement("button");
       kick.type = "button";
       kick.className = "player__kick";
