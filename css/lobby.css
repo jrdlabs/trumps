@@ -12,6 +12,9 @@
 .player__seat { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; color: #133120; background: #c9e1d1; font-weight: 900; }
 .player__name { min-width: 0; flex: 1; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .player__tag { color: var(--gold); font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.player__status { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: #65766c; box-shadow: 0 0 0 3px rgba(101,118,108,.13); }
+.player__status--online { background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.14); }
+.player__kick { padding: 6px 8px; color: #ffc8c8; border: 1px solid rgba(255,130,130,.24); border-radius: 8px; background: rgba(130,20,20,.16); font-size: 10px; font-weight: 800; cursor: pointer; }
 .player--empty { border-style: dashed; color: #7f9085; background: transparent; }
 .player--empty .player__seat { color: #789084; background: rgba(255,255,255,.07); }
-
+.lobby .button--secondary { margin-top: 10px; }

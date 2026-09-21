@@ -1,10 +1,12 @@
 import { ensureAnonymousSession } from "./supabase.js";
-import { createRoom, forgetRoom, getLobby, joinRoom, leaveRoom, normalizeRoomCode, readRememberedRoom, subscribeToLobby } from "./lobby.js";
-import { friendlyError, renderLobby, setBusy, showToast, showView } from "./ui.js";
+import { createRoom, getLobby, getMyTables, joinRoom, kickPlayer, leaveRoom, normalizeRoomCode, subscribeToLobby, touchPresence } from "./lobby.js";
+import { friendlyError, renderLobby, renderTables, setBusy, showToast, showView } from "./ui.js";
 
 let session;
 let currentRoom;
 let unsubscribeLobby;
+let presenceTimer;
+let installPrompt;
 
 const createForm = document.querySelector("#create-form");
 const joinForm = document.querySelector("#join-form");
@@ -15,19 +17,46 @@ async function refreshLobby() {
   if (!currentRoom) return;
   try {
     const lobby = await getLobby(currentRoom.id);
-    renderLobby({ ...lobby, currentUserId: session.user.id });
+    renderLobby({
+      ...lobby,
+      currentUserId: session.user.id,
+      onKick: async (player) => {
+        if (!confirm(`Remove ${player.display_name} from this table?`)) return;
+        try { await kickPlayer(currentRoom.id, player.id); }
+        catch (error) { showToast(friendlyError(error)); }
+      },
+    });
   } catch (error) {
-    forgetRoom();
     currentRoom = null;
-    showView("home");
+    await showDashboard();
     showToast(friendlyError(error));
   }
+}
+
+async function showDashboard() {
+  unsubscribeLobby?.();
+  clearInterval(presenceTimer);
+  currentRoom = null;
+  history.replaceState(null, "", location.pathname);
+  const tables = await getMyTables(session.user.id);
+  renderTables(tables, (table) => enterLobby({ id: table.id, code: table.code, seat: table.membership.seat }));
+  showView("home");
 }
 
 async function enterLobby(room) {
   currentRoom = room;
   showView("lobby");
   await refreshLobby();
+  await touchPresence(room.id);
+  clearInterval(presenceTimer);
+  presenceTimer = setInterval(async () => {
+    try { await touchPresence(room.id); }
+    catch {
+      clearInterval(presenceTimer);
+      await showDashboard();
+      showToast("You are no longer seated at that table.");
+    }
+  }, 25000);
   unsubscribeLobby?.();
   unsubscribeLobby = subscribeToLobby(
     room.id,
@@ -48,9 +77,13 @@ async function initialize() {
     const inviteCode = normalizeRoomCode(params.get("room") || "");
     if (inviteCode) joinCode.value = inviteCode;
 
-    const remembered = readRememberedRoom();
-    if (remembered?.id) await enterLobby(remembered);
-    else showView("home");
+    const tables = await getMyTables(session.user.id);
+    const existing = inviteCode ? tables.find((table) => table.code === inviteCode) : null;
+    if (existing) await enterLobby({ id: existing.id, code: existing.code, seat: existing.membership.seat });
+    else {
+      renderTables(tables, (table) => enterLobby({ id: table.id, code: table.code, seat: table.membership.seat }));
+      showView("home");
+    }
   } catch (error) {
     showView("home");
     showToast(friendlyError(error));
@@ -86,10 +119,12 @@ document.querySelector("#leave-room").addEventListener("click", async () => {
   try { await leaveRoom(currentRoom.id); }
   catch (error) { showToast(friendlyError(error)); return; }
   unsubscribeLobby?.();
+  clearInterval(presenceTimer);
   currentRoom = null;
-  history.replaceState(null, "", location.pathname);
-  showView("home");
+  await showDashboard();
 });
+
+document.querySelector("#back-to-tables").addEventListener("click", showDashboard);
 
 document.querySelector("#start-game").addEventListener("click", () => {
   showToast("Game start is the next build milestone.");
@@ -97,3 +132,20 @@ document.querySelector("#start-game").addEventListener("click", () => {
 
 initialize();
 
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  installPrompt = event;
+  document.querySelector("#install-app").hidden = false;
+});
+
+document.querySelector("#install-app").addEventListener("click", async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  document.querySelector("#install-app").hidden = true;
+});
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
+}

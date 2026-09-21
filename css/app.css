@@ -56,6 +56,7 @@ input::placeholder { color: #85968a; }
 .button--primary { color: #1f1707; background: linear-gradient(180deg, #ffd873, var(--gold)); box-shadow: 0 10px 24px rgba(188,132,32,.22); }
 .button--secondary { color: white; background: var(--felt-700); border: 1px solid rgba(255,255,255,.14); }
 .button--ghost { margin-top: 10px; color: var(--muted); background: transparent; }
+.button--install { margin-top: 18px; color: var(--gold); border: 1px solid rgba(245,196,81,.38); background: rgba(245,196,81,.08); }
 .divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 -4px; color: #86968c; font-size: 12px; }
 .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .status-panel { display: grid; justify-items: center; gap: 12px; padding: 56px 20px; color: var(--muted); }
@@ -64,3 +65,12 @@ input::placeholder { color: #85968a; }
 .toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 20; width: max-content; max-width: calc(100vw - 32px); padding: 11px 16px; border-radius: 999px; color: #181208; background: #f8df9e; box-shadow: 0 12px 30px rgba(0,0,0,.3); transform: translateX(-50%); font-size: 13px; font-weight: 800; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.section-heading h2 { margin: 5px 0 0; font-family: Georgia, serif; font-size: 26px; }
+.table-list { display: grid; gap: 9px; margin-top: 18px; }
+.table-card { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px; color: var(--ink); border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.045); text-align: left; cursor: pointer; }
+.table-card__code { display: grid; place-items: center; min-width: 74px; min-height: 42px; border-radius: 10px; color: var(--gold); background: rgba(0,0,0,.22); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 900; letter-spacing: .08em; }
+.table-card__details { min-width: 0; flex: 1; }
+.table-card__details strong, .table-card__details small { display: block; }
+.table-card__details small { margin-top: 3px; color: var(--muted); }
+.table-card__arrow { color: var(--gold); font-size: 22px; }
