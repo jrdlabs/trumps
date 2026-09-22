@@ -30,6 +30,10 @@
 .playing-card--small { width:42px;height:58px }.playing-card--small b { font-size:19px }
 .playing-card:disabled { cursor:not-allowed;opacity:.4 }.trick-slot .playing-card:disabled { opacity:1 }
 .playing-card--selected { opacity:1!important;border-color:var(--gold);transform:translateY(-11px);box-shadow:0 12px 20px rgba(0,0,0,.42),0 0 0 3px rgba(245,196,81,.28) }
+.playing-card--dealt { animation:deal-card .34s cubic-bezier(.2,.8,.25,1) both;animation-delay:var(--deal-delay,0ms) }
+.trick-slot .playing-card--played { animation:play-card .32s cubic-bezier(.2,.85,.3,1.15) both }
+@keyframes deal-card { from { opacity:0;transform:translate(45px,-90px) rotate(8deg) scale(.72) } to { opacity:1;transform:translate(0,0) rotate(0) scale(1) } }
+@keyframes play-card { from { opacity:.2;transform:translateY(65px) scale(.82) } to { opacity:1;transform:translateY(0) scale(1) } }
 .game-action { margin:10px 0;padding:12px;border:1px solid rgba(245,196,81,.22);border-radius:14px;background:rgba(245,196,81,.08) }
 .game-action p { margin:0 0 10px;color:#e2e7e3;font-size:13px;text-align:center }.game-action p:last-child { margin-bottom:0 }
 .trick-countdown { height:5px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.1) }.trick-countdown i { display:block;width:100%;height:100%;background:var(--gold);transform-origin:left;animation:trick-countdown 5s linear forwards }
@@ -51,3 +55,4 @@
 .tally-wrap th,.tally-wrap td { padding:6px 1px;border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid var(--line);overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
 .tally-wrap th:first-child,.tally-wrap td:first-child { width:7% }.tally-wrap th { color:var(--gold) }.tally-wrap .player-start,.tally-wrap .player-group { border-left:2px solid rgba(245,196,81,.55) }.tally-wrap tr>*:last-child { border-right:0 }.tally-wrap tfoot td { border-bottom:0 }
 @media (min-width:520px){.scoreboard{grid-template-columns:repeat(4,1fr)}}
+@media (prefers-reduced-motion:reduce){.playing-card--dealt,.trick-slot .playing-card--played,.trick-countdown i{animation:none}}

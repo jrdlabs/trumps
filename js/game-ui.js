@@ -6,6 +6,8 @@ const escapeHtml=value=>String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<"
 let selectedBid=null;
 let selectedCard=null;
 let lastRevision=null;
+let lastAnimatedHandKey=null;
+let lastPlaySignature="";
 
 function legalCard(game,card){
   if(game.phase!=="playing"||game.turnSeat!==game.mySeat)return false;
@@ -50,16 +52,19 @@ export function renderGame({game,players,roomCode,onBid,onPlay,onNextHand,onRest
   }
 
   const trick=document.querySelector("#trick-table");trick.replaceChildren();
+  const playSignature=(game.currentTrick||[]).map(play=>`${play.seat}:${play.card}`).join("|");
+  const newestPlaySeat=playSignature!==lastPlaySignature&&game.currentTrick?.length?game.currentTrick.at(-1).seat:null;
   const leadSeat=game.phase==="trick_complete"?game.lastTrick?.winner:(game.currentTrick?.[0]?.seat??game.turnSeat);
   const tableOrder=Array.from({length:4},(_,offset)=>((leadSeat??0)+offset)%4);
   for(const seat of tableOrder){
     const slot=document.createElement("div");const play=game.currentTrick?.find(item=>item.seat===seat);const won=game.lastTrick?.winner===seat;
     const isLeader=seat===leadSeat;slot.className=`trick-slot${won?" trick-slot--winner":""}${isLeader?" trick-slot--leader":""}${seat===game.turnSeat?" trick-slot--turn":""}`;
     const label=document.createElement("small");label.textContent=`${isLeader?"LEADS · ":""}${bySeat[seat]?.display_name||`Seat ${seat+1}`}${won?" ✓":""}`;slot.append(label);
-    if(play)slot.append(cardElement(parseCard(play.card),{small:true,disabled:true}));
+    if(play){const playedCard=cardElement(parseCard(play.card),{small:true,disabled:true});if(seat===newestPlaySeat)playedCard.classList.add("playing-card--played");slot.append(playedCard)}
     else{const blank=document.createElement("div");blank.className="card-blank";slot.append(blank)}
     trick.append(slot);
   }
+  lastPlaySignature=playSignature;
 
   const action=document.querySelector("#game-action");action.replaceChildren();
   const message=document.createElement("p");
@@ -89,6 +94,9 @@ export function renderGame({game,players,roomCode,onBid,onPlay,onNextHand,onRest
 
   const hand=document.querySelector("#my-hand");hand.replaceChildren();
   const cards=(game.hand||[]).map(parseCard).sort((a,b)=>SUIT_ORDER[a.suit]-SUIT_ORDER[b.suit]||RANK_ORDER[a.rank]-RANK_ORDER[b.rank]);
+  const handAnimationKey=`${roomCode}:${game.handIndex}`;
+  const animateDeal=lastAnimatedHandKey!==handAnimationKey&&cards.length>0;
+  let dealtCardIndex=0;
   const rowSize=cards.length>6?Math.ceil(cards.length/2):cards.length||1;
   for(let start=0;start<cards.length;start+=rowSize){
     const row=document.createElement("div");row.className="card-row";
@@ -98,10 +106,12 @@ export function renderGame({game,players,roomCode,onBid,onPlay,onNextHand,onRest
         if(selectedCard===card.value){selectedCard=null;onPlay(card.value);return}
         selectedCard=card.value;hand.querySelectorAll(".playing-card--selected").forEach(item=>item.classList.remove("playing-card--selected"));button.classList.add("playing-card--selected");
       }});
+      if(animateDeal){button.classList.add("playing-card--dealt");button.style.setProperty("--deal-delay",`${dealtCardIndex*70}ms`);dealtCardIndex+=1}
       button.style.zIndex=index+1;row.append(button);
     });
     hand.append(row);
   }
+  if(animateDeal)lastAnimatedHandKey=handAnimationKey;
   document.querySelector("#hand-help").textContent=game.turnSeat===game.mySeat&&game.phase==="playing"?"Tap once to select · again to play":`${cards.length} card${cards.length===1?"":"s"}`;
 
   const myTricks=game.myWonTricks||[];
