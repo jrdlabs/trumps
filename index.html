@@ -99,6 +99,7 @@
         <div id="scoreboard" class="scoreboard"></div>
         <div class="game-tabs" role="tablist">
           <button id="game-tab" class="game-tab game-tab--active" type="button">Table</button>
+          <button id="tricks-tab" class="game-tab" type="button">My tricks <span id="my-tricks-count">0</span></button>
           <button id="tally-tab" class="game-tab" type="button">Tally</button>
         </div>
         <div id="table-panel">
@@ -107,6 +108,13 @@
           <div id="game-action" class="game-action"></div>
           <div class="hand-heading"><strong>Your hand</strong><span id="hand-help"></span></div>
           <div id="my-hand" class="card-hand"></div>
+        </div>
+        <div id="tricks-panel" hidden>
+          <div class="private-tricks-heading">
+            <strong>Tricks you won</strong>
+            <span>Private to you</span>
+          </div>
+          <div id="my-tricks" class="my-tricks"></div>
         </div>
         <div id="tally-panel" hidden><div id="tally-table" class="tally-wrap"></div></div>
       </section>

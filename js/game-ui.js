@@ -26,7 +26,7 @@ function cardElement(card,{small=false,disabled=false,selected=false,onClick}={}
   return button;
 }
 
-export function renderGame({game,players,roomCode,onBid,onPlay,onContinue,onNextHand,onRestart}){
+export function renderGame({game,players,roomCode,onBid,onPlay,onNextHand,onRestart}){
   if(lastRevision!==game.revision){selectedBid=null;selectedCard=null;lastRevision=game.revision}
   const ordered=players.slice().sort((a,b)=>a.seat-b.seat);
   const bySeat=Object.fromEntries(players.map(player=>[player.seat,player]));
@@ -44,15 +44,18 @@ export function renderGame({game,players,roomCode,onBid,onPlay,onContinue,onNext
     const item=document.createElement("div");item.className=`score${seat===game.turnSeat?" score--turn":""}`;
     const name=document.createElement("small");name.textContent=`${bySeat[seat]?.display_name||`Seat ${seat+1}`}${seat===game.mySeat?" · You":""}`;
     const total=document.createElement("strong");total.textContent=game.totals?.[seat]??0;
-    const detail=document.createElement("span");const bid=game.bids?.[seat];detail.textContent=bid==null?"No bid":`Bid ${bid} · Won ${game.tricksWon?.[seat]??0}`;
-    item.append(name,total,detail);scoreboard.append(item);
+    const stats=document.createElement("div");stats.className="score__stats";const bid=game.bids?.[seat];
+    stats.innerHTML=`<span><b>${bid??"—"}</b><small>Bid</small></span><span><b>${game.tricksWon?.[seat]??0}</b><small>Won</small></span>`;
+    item.append(name,total,stats);scoreboard.append(item);
   }
 
   const trick=document.querySelector("#trick-table");trick.replaceChildren();
-  for(let seat=0;seat<4;seat+=1){
+  const leadSeat=game.phase==="trick_complete"?game.lastTrick?.winner:(game.currentTrick?.[0]?.seat??game.turnSeat);
+  const tableOrder=Array.from({length:4},(_,offset)=>((leadSeat??0)+offset)%4);
+  for(const seat of tableOrder){
     const slot=document.createElement("div");const play=game.currentTrick?.find(item=>item.seat===seat);const won=game.lastTrick?.winner===seat;
-    slot.className=`trick-slot${won?" trick-slot--winner":""}`;
-    const label=document.createElement("small");label.textContent=`${bySeat[seat]?.display_name||`Seat ${seat+1}`}${won?" ✓":""}`;slot.append(label);
+    const isLeader=seat===leadSeat;slot.className=`trick-slot${won?" trick-slot--winner":""}${isLeader?" trick-slot--leader":""}${seat===game.turnSeat?" trick-slot--turn":""}`;
+    const label=document.createElement("small");label.textContent=`${isLeader?"LEADS · ":""}${bySeat[seat]?.display_name||`Seat ${seat+1}`}${won?" ✓":""}`;slot.append(label);
     if(play)slot.append(cardElement(parseCard(play.card),{small:true,disabled:true}));
     else{const blank=document.createElement("div");blank.className="card-blank";slot.append(blank)}
     trick.append(slot);
@@ -74,7 +77,10 @@ export function renderGame({game,players,roomCode,onBid,onPlay,onContinue,onNext
   }else if(game.phase==="playing"){
     message.textContent=game.turnSeat===game.mySeat?(game.trickNumber===0?"Your turn · you must play trump if you have one.":"Your turn · choose a legal card."):`Waiting for ${bySeat[game.turnSeat]?.display_name||"player"}…`;action.append(message);
   }else if(game.phase==="trick_complete"){
-    message.textContent=`${bySeat[game.lastTrick.winner]?.display_name||"Player"} won the trick.`;action.append(message);addButton(game.trickNumber+1===game.handSize?"Show hand result":"Next trick",onContinue);
+    const completedAt=Date.parse(game.trickCompletedAt||"");
+    const seconds=Number.isFinite(completedAt)?Math.max(0,Math.ceil((completedAt+5000-Date.now())/1000)):5;
+    message.textContent=`${bySeat[game.lastTrick.winner]?.display_name||"Player"} won the trick. ${game.trickNumber+1===game.handSize?"Hand result":"Next trick"} in ${seconds}s…`;action.append(message);
+    const countdown=document.createElement("div");countdown.className="trick-countdown";countdown.innerHTML="<i></i>";action.append(countdown);
   }else if(game.phase==="hand_complete"){
     message.textContent="Hand complete. Scores have been added.";action.append(message);if(me?.is_host)addButton("Deal next hand",onNextHand);else message.textContent+=" Waiting for the host to deal.";
   }else if(game.phase==="game_complete"){
@@ -98,10 +104,22 @@ export function renderGame({game,players,roomCode,onBid,onPlay,onContinue,onNext
   }
   document.querySelector("#hand-help").textContent=game.turnSeat===game.mySeat&&game.phase==="playing"?"Tap once to select · again to play":`${cards.length} card${cards.length===1?"":"s"}`;
 
+  const myTricks=game.myWonTricks||[];
+  document.querySelector("#my-tricks-count").textContent=myTricks.length;
+  const tricksWrap=document.querySelector("#my-tricks");tricksWrap.replaceChildren();
+  if(!myTricks.length){const empty=document.createElement("p");empty.className="empty-tricks";empty.textContent="You have not won a trick yet.";tricksWrap.append(empty)}
+  for(const wonTrick of myTricks.slice().reverse()){
+    const item=document.createElement("article");item.className="won-trick";
+    const title=document.createElement("strong");title.textContent=`Hand ${wonTrick.handIndex+1} · Trick ${wonTrick.trickNumber+1}`;
+    const cards=document.createElement("div");cards.className="won-trick__cards";
+    (wonTrick.plays||[]).forEach(play=>cards.append(cardElement(parseCard(play.card),{small:true,disabled:true})));
+    item.append(title,cards);tricksWrap.append(item);
+  }
+
   const tally=document.querySelector("#tally-table");
-  const headings=ordered.map(player=>`<th colspan="3">${escapeHtml(player.display_name)}</th>`).join("");
-  const subheads=ordered.map(()=>"<th>B</th><th>W</th><th>Pts</th>").join("");
-  const rows=(game.history||[]).map(row=>`<tr><td>${row.handSize}</td>${ordered.map(player=>`<td>${row.bids[player.seat]}</td><td>${row.won[player.seat]}</td><td>${row.scores[player.seat]>=0?"+":""}${row.scores[player.seat]}</td>`).join("")}</tr>`).join("");
-  const totals=ordered.map(player=>`<td colspan="3"><strong>${game.totals[player.seat]}</strong></td>`).join("");
+  const headings=ordered.map(player=>`<th class="player-group" colspan="3">${escapeHtml(player.display_name)}</th>`).join("");
+  const subheads=ordered.map(()=>"<th class=\"player-start\">B</th><th>W</th><th>Pts</th>").join("");
+  const rows=(game.history||[]).map(row=>`<tr><td>${row.handSize}</td>${ordered.map(player=>`<td class="player-start">${row.bids[player.seat]}</td><td>${row.won[player.seat]}</td><td>${row.scores[player.seat]>=0?"+":""}${row.scores[player.seat]}</td>`).join("")}</tr>`).join("");
+  const totals=ordered.map(player=>`<td class="player-start" colspan="3"><strong>${game.totals[player.seat]}</strong></td>`).join("");
   tally.innerHTML=`<table><thead><tr><th>Cards</th>${headings}</tr><tr><th></th>${subheads}</tr></thead><tbody>${rows||`<tr><td colspan="13">No completed hands yet</td></tr>`}</tbody><tfoot><tr><td>Total</td>${totals}</tr></tfoot></table>`;
 }

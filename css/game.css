@@ -5,8 +5,11 @@
 .scoreboard { display:grid;grid-template-columns:repeat(2,1fr);gap:8px }
 .score { padding:10px;border:1px solid var(--line);border-radius:13px;background:rgba(0,0,0,.2) }
 .score--turn { border-color:var(--gold);box-shadow:0 0 0 2px rgba(245,196,81,.12) }
-.score small,.score span { display:block;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.score>small { display:block;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
 .score small { font-size:10px }.score strong { display:block;margin:3px 0;font-size:21px }.score span { font-size:10px }
+.score__stats { display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:5px }
+.score__stats span { display:flex;align-items:baseline;justify-content:center;gap:4px;padding:4px;border-radius:8px;background:rgba(255,255,255,.07) }
+.score__stats b { color:var(--gold);font-size:15px }.score__stats small { color:var(--muted);font-size:8px;text-transform:uppercase }
 .game-tabs { display:flex;gap:4px;margin:13px 0;padding:4px;border-radius:12px;background:rgba(0,0,0,.2) }
 .game-tab { flex:1;padding:8px;color:var(--muted);border:0;border-radius:9px;background:transparent;cursor:pointer }
 .game-tab--active { color:var(--ink);background:rgba(255,255,255,.1);font-weight:800 }
@@ -18,6 +21,9 @@
 .trick-slot { display:grid;justify-items:center;align-content:start;gap:7px;min-width:0 }
 .trick-slot small { max-width:100%;color:var(--muted);font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
 .trick-slot--winner small { color:#75ef9f;font-weight:900 }
+.trick-slot--leader { padding:5px 2px;border-radius:10px;background:rgba(245,196,81,.1);box-shadow:inset 0 0 0 1px rgba(245,196,81,.3) }
+.trick-slot--leader small { color:var(--gold);font-weight:900 }
+.trick-slot--turn { box-shadow:inset 0 0 0 2px var(--gold),0 0 12px rgba(245,196,81,.18) }
 .card-blank { width:42px;height:58px;border:1px dashed rgba(255,255,255,.12);border-radius:7px }
 .playing-card { display:grid;place-items:center;align-content:center;width:54px;height:76px;flex:0 0 auto;padding:2px;color:#171717;border:2px solid #ddd;border-radius:9px;background:#fffdf7;box-shadow:0 5px 12px rgba(0,0,0,.25);cursor:pointer }
 .playing-card span { font-weight:900 }.playing-card b { font-size:25px;line-height:1 }.playing-card--red { color:#c72b2b }
@@ -26,6 +32,8 @@
 .playing-card--selected { opacity:1!important;border-color:var(--gold);transform:translateY(-11px);box-shadow:0 12px 20px rgba(0,0,0,.42),0 0 0 3px rgba(245,196,81,.28) }
 .game-action { margin:10px 0;padding:12px;border:1px solid rgba(245,196,81,.22);border-radius:14px;background:rgba(245,196,81,.08) }
 .game-action p { margin:0 0 10px;color:#e2e7e3;font-size:13px;text-align:center }.game-action p:last-child { margin-bottom:0 }
+.trick-countdown { height:5px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.1) }.trick-countdown i { display:block;width:100%;height:100%;background:var(--gold);transform-origin:left;animation:trick-countdown 5s linear forwards }
+@keyframes trick-countdown { to { transform:scaleX(0) } }
 .bid-choices { display:flex;flex-wrap:wrap;justify-content:center;gap:7px }
 .bid-choices button { width:38px;height:38px;color:#181208;border:0;border-radius:50%;background:var(--gold);font-weight:900;cursor:pointer }
 .bid-choices .bid-choice--selected { color:var(--gold);background:#171208;box-shadow:0 0 0 3px rgba(245,196,81,.32) }
@@ -34,7 +42,12 @@
 .card-hand { display:grid;gap:4px;padding:12px 2px 4px;overflow:visible }
 .card-row { display:flex;justify-content:center;min-height:82px;padding-top:10px }
 .card-row .playing-card+.playing-card { margin-left:-12px }
-.tally-wrap { overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.16) }
-.tally-wrap table { min-width:620px;width:100%;border-collapse:collapse;font-size:10px;text-align:center }
-.tally-wrap th,.tally-wrap td { padding:7px 5px;border-bottom:1px solid var(--line) }.tally-wrap th { color:var(--gold) }.tally-wrap tfoot td { border-bottom:0 }
+.private-tricks-heading { display:flex;justify-content:space-between;align-items:baseline;margin:12px 2px }.private-tricks-heading span { color:var(--muted);font-size:11px }
+.my-tricks { display:grid;gap:9px }.empty-tricks { padding:30px 10px;color:var(--muted);text-align:center }
+.won-trick { padding:10px;border:1px solid var(--line);border-radius:13px;background:rgba(0,0,0,.16) }.won-trick>strong { display:block;margin-bottom:8px;color:var(--gold);font-size:11px }
+.won-trick__cards { display:flex;justify-content:center;gap:5px }.won-trick__cards .playing-card:disabled { opacity:1 }
+.tally-wrap { width:100%;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.16) }
+.tally-wrap table { table-layout:fixed;width:100%;border-collapse:collapse;font-size:clamp(6px,1.8vw,10px);text-align:center }
+.tally-wrap th,.tally-wrap td { padding:6px 1px;border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid var(--line);overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+.tally-wrap th:first-child,.tally-wrap td:first-child { width:7% }.tally-wrap th { color:var(--gold) }.tally-wrap .player-start,.tally-wrap .player-group { border-left:2px solid rgba(245,196,81,.55) }.tally-wrap tr>*:last-child { border-right:0 }.tally-wrap tfoot td { border-bottom:0 }
 @media (min-width:520px){.scoreboard{grid-template-columns:repeat(4,1fr)}}

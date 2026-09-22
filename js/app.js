@@ -11,6 +11,8 @@ let stateTimer;
 let installPrompt;
 let gameActionBusy = false;
 let refreshInFlight = false;
+let autoAdvanceTimer;
+let scheduledTrickRevision;
 
 const createForm = document.querySelector("#create-form");
 const joinForm = document.querySelector("#join-form");
@@ -31,10 +33,10 @@ async function refreshLobby() {
         roomCode: lobby.room.code,
         onBid: (bid) => runGameAction(() => submitBid(currentRoom.id, bid)),
         onPlay: (card) => runGameAction(() => playCard(currentRoom.id, card)),
-        onContinue: () => runGameAction(() => continueGame(currentRoom.id)),
         onNextHand: () => runGameAction(() => nextHand(currentRoom.id)),
         onRestart: () => runGameAction(() => startGame(currentRoom.id)),
       });
+      scheduleAutomaticAdvance(game);
       return;
     }
     showView("lobby");
@@ -56,6 +58,25 @@ async function refreshLobby() {
   }
 }
 
+function scheduleAutomaticAdvance(game) {
+  if (game.phase !== "trick_complete") {
+    clearTimeout(autoAdvanceTimer);
+    scheduledTrickRevision = null;
+    return;
+  }
+  if (scheduledTrickRevision === game.revision) return;
+  clearTimeout(autoAdvanceTimer);
+  scheduledTrickRevision = game.revision;
+  const completedAt = Date.parse(game.trickCompletedAt || "");
+  const delay = Number.isFinite(completedAt) ? Math.max(0, completedAt + 5000 - Date.now()) : 5000;
+  autoAdvanceTimer = setTimeout(async () => {
+    if (!currentRoom || scheduledTrickRevision !== game.revision) return;
+    try { await continueGame(currentRoom.id); }
+    catch { /* Another connected player may have advanced the same trick first. */ }
+    await refreshLobby();
+  }, delay + 80);
+}
+
 async function runGameAction(action) {
   if (gameActionBusy) return;
   gameActionBusy = true;
@@ -73,6 +94,7 @@ async function showDashboard() {
   unsubscribeLobby?.();
   clearInterval(presenceTimer);
   clearInterval(stateTimer);
+  clearTimeout(autoAdvanceTimer);
   currentRoom = null;
   history.replaceState(null, "", location.pathname);
   const tables = await getMyTables(session.user.id);
@@ -173,15 +195,28 @@ document.querySelector("#game-back").addEventListener("click", showDashboard);
 
 document.querySelector("#game-tab").addEventListener("click", () => {
   document.querySelector("#table-panel").hidden = false;
+  document.querySelector("#tricks-panel").hidden = true;
   document.querySelector("#tally-panel").hidden = true;
   document.querySelector("#game-tab").classList.add("game-tab--active");
+  document.querySelector("#tricks-tab").classList.remove("game-tab--active");
+  document.querySelector("#tally-tab").classList.remove("game-tab--active");
+});
+
+document.querySelector("#tricks-tab").addEventListener("click", () => {
+  document.querySelector("#table-panel").hidden = true;
+  document.querySelector("#tricks-panel").hidden = false;
+  document.querySelector("#tally-panel").hidden = true;
+  document.querySelector("#game-tab").classList.remove("game-tab--active");
+  document.querySelector("#tricks-tab").classList.add("game-tab--active");
   document.querySelector("#tally-tab").classList.remove("game-tab--active");
 });
 
 document.querySelector("#tally-tab").addEventListener("click", () => {
   document.querySelector("#table-panel").hidden = true;
+  document.querySelector("#tricks-panel").hidden = true;
   document.querySelector("#tally-panel").hidden = false;
   document.querySelector("#game-tab").classList.remove("game-tab--active");
+  document.querySelector("#tricks-tab").classList.remove("game-tab--active");
   document.querySelector("#tally-tab").classList.add("game-tab--active");
 });
 
