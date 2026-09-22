@@ -7,8 +7,10 @@ let session;
 let currentRoom;
 let unsubscribeLobby;
 let presenceTimer;
+let stateTimer;
 let installPrompt;
 let gameActionBusy = false;
+let refreshInFlight = false;
 
 const createForm = document.querySelector("#create-form");
 const joinForm = document.querySelector("#join-form");
@@ -16,7 +18,8 @@ const joinCode = document.querySelector("#join-code");
 const connectionBadge = document.querySelector("#connection-badge");
 
 async function refreshLobby() {
-  if (!currentRoom) return;
+  if (!currentRoom || refreshInFlight) return;
+  refreshInFlight = true;
   try {
     const lobby = await getLobby(currentRoom.id);
     if (lobby.room.status === "playing") {
@@ -48,6 +51,8 @@ async function refreshLobby() {
     currentRoom = null;
     await showDashboard();
     showToast(friendlyError(error));
+  } finally {
+    refreshInFlight = false;
   }
 }
 
@@ -67,6 +72,7 @@ async function runGameAction(action) {
 async function showDashboard() {
   unsubscribeLobby?.();
   clearInterval(presenceTimer);
+  clearInterval(stateTimer);
   currentRoom = null;
   history.replaceState(null, "", location.pathname);
   const tables = await getMyTables(session.user.id);
@@ -88,6 +94,8 @@ async function enterLobby(room) {
       showToast("You are no longer seated at that table.");
     }
   }, 25000);
+  clearInterval(stateTimer);
+  stateTimer = setInterval(refreshLobby, 1500);
   unsubscribeLobby?.();
   unsubscribeLobby = subscribeToLobby(
     room.id,

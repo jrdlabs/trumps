@@ -10,7 +10,10 @@
 .game-tabs { display:flex;gap:4px;margin:13px 0;padding:4px;border-radius:12px;background:rgba(0,0,0,.2) }
 .game-tab { flex:1;padding:8px;color:var(--muted);border:0;border-radius:9px;background:transparent;cursor:pointer }
 .game-tab--active { color:var(--ink);background:rgba(255,255,255,.1);font-weight:800 }
-.game-meta { display:flex;justify-content:space-between;gap:10px;margin-bottom:10px;color:var(--muted);font-size:12px }
+.game-meta { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;color:var(--muted);font-size:12px }
+#game-trump { display:flex;align-items:center;gap:9px;color:var(--gold);font-weight:800 }
+#game-trump .playing-card { width:48px;height:66px;border-color:var(--gold);transform:rotate(3deg);box-shadow:0 7px 18px rgba(0,0,0,.38) }
+#game-trump .playing-card:disabled { opacity:1 }
 .trick-table { display:grid;grid-template-columns:repeat(4,1fr);gap:6px;min-height:110px;padding:12px 8px;border:1px solid var(--line);border-radius:18px;background:radial-gradient(circle,rgba(21,101,65,.5),rgba(0,0,0,.18)) }
 .trick-slot { display:grid;justify-items:center;align-content:start;gap:7px;min-width:0 }
 .trick-slot small { max-width:100%;color:var(--muted);font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
@@ -20,12 +23,17 @@
 .playing-card span { font-weight:900 }.playing-card b { font-size:25px;line-height:1 }.playing-card--red { color:#c72b2b }
 .playing-card--small { width:42px;height:58px }.playing-card--small b { font-size:19px }
 .playing-card:disabled { cursor:not-allowed;opacity:.4 }.trick-slot .playing-card:disabled { opacity:1 }
+.playing-card--selected { opacity:1!important;border-color:var(--gold);transform:translateY(-11px);box-shadow:0 12px 20px rgba(0,0,0,.42),0 0 0 3px rgba(245,196,81,.28) }
 .game-action { margin:10px 0;padding:12px;border:1px solid rgba(245,196,81,.22);border-radius:14px;background:rgba(245,196,81,.08) }
 .game-action p { margin:0 0 10px;color:#e2e7e3;font-size:13px;text-align:center }.game-action p:last-child { margin-bottom:0 }
 .bid-choices { display:flex;flex-wrap:wrap;justify-content:center;gap:7px }
 .bid-choices button { width:38px;height:38px;color:#181208;border:0;border-radius:50%;background:var(--gold);font-weight:900;cursor:pointer }
+.bid-choices .bid-choice--selected { color:var(--gold);background:#171208;box-shadow:0 0 0 3px rgba(245,196,81,.32) }
+.bid-confirm { margin-top:11px }
 .hand-heading { display:flex;justify-content:space-between;margin:14px 2px 8px }.hand-heading span { color:var(--muted);font-size:12px }
-.card-hand { display:flex;gap:7px;padding:4px 2px 12px;overflow-x:auto;scroll-snap-type:x proximity }.card-hand .playing-card { scroll-snap-align:start }
+.card-hand { display:grid;gap:4px;padding:12px 2px 4px;overflow:visible }
+.card-row { display:flex;justify-content:center;min-height:82px;padding-top:10px }
+.card-row .playing-card+.playing-card { margin-left:-12px }
 .tally-wrap { overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.16) }
 .tally-wrap table { min-width:620px;width:100%;border-collapse:collapse;font-size:10px;text-align:center }
 .tally-wrap th,.tally-wrap td { padding:7px 5px;border-bottom:1px solid var(--line) }.tally-wrap th { color:var(--gold) }.tally-wrap tfoot td { border-bottom:0 }

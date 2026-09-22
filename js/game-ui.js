@@ -3,6 +3,9 @@ const SUIT_ORDER={S:0,H:1,C:2,D:3};
 const RANK_ORDER={"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,J:11,Q:12,K:13,A:14};
 const parseCard=value=>({value,suit:value[0],rank:value.slice(1)});
 const escapeHtml=value=>String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+let selectedBid=null;
+let selectedCard=null;
+let lastRevision=null;
 
 function legalCard(game,card){
   if(game.phase!=="playing"||game.turnSeat!==game.mySeat)return false;
@@ -12,10 +15,10 @@ function legalCard(game,card){
   return card.suit===game.ledSuit||!hand.some(item=>item.suit===game.ledSuit);
 }
 
-function cardElement(card,{small=false,disabled=false,onClick}={}){
+function cardElement(card,{small=false,disabled=false,selected=false,onClick}={}){
   const button=document.createElement("button");
   button.type="button";
-  button.className=`playing-card${card.suit==="H"||card.suit==="D"?" playing-card--red":""}${small?" playing-card--small":""}`;
+  button.className=`playing-card${card.suit==="H"||card.suit==="D"?" playing-card--red":""}${small?" playing-card--small":""}${selected?" playing-card--selected":""}`;
   const rank=document.createElement("span");rank.textContent=card.rank;
   const suit=document.createElement("b");suit.textContent=SUIT_SYMBOL[card.suit];
   button.append(rank,suit);button.disabled=disabled;
@@ -24,6 +27,7 @@ function cardElement(card,{small=false,disabled=false,onClick}={}){
 }
 
 export function renderGame({game,players,roomCode,onBid,onPlay,onContinue,onNextHand,onRestart}){
+  if(lastRevision!==game.revision){selectedBid=null;selectedCard=null;lastRevision=game.revision}
   const ordered=players.slice().sort((a,b)=>a.seat-b.seat);
   const bySeat=Object.fromEntries(players.map(player=>[player.seat,player]));
   const me=bySeat[game.mySeat];
@@ -31,7 +35,9 @@ export function renderGame({game,players,roomCode,onBid,onPlay,onContinue,onNext
   document.querySelector("#game-hand-title").textContent=`Hand ${game.handIndex+1} of 22 · ${game.handSize} cards`;
   document.querySelector("#game-dealer").textContent=`Dealer: ${bySeat[game.dealerSeat]?.display_name||"—"}`;
   const turned=game.trumpCard?parseCard(game.trumpCard):null;
-  document.querySelector("#game-trump").textContent=`Trump ${SUIT_SYMBOL[game.trumpSuit]||"—"}${turned?` · turned ${turned.rank}${SUIT_SYMBOL[turned.suit]}`:""}`;
+  const trumpDisplay=document.querySelector("#game-trump");trumpDisplay.replaceChildren();
+  const trumpLabel=document.createElement("span");trumpLabel.textContent="Turned trump";trumpDisplay.append(trumpLabel);
+  if(turned)trumpDisplay.append(cardElement(turned,{small:true,disabled:true}));
 
   const scoreboard=document.querySelector("#scoreboard");scoreboard.replaceChildren();
   for(let seat=0;seat<4;seat+=1){
@@ -57,7 +63,14 @@ export function renderGame({game,players,roomCode,onBid,onPlay,onContinue,onNext
   const addButton=(label,handler)=>{const button=document.createElement("button");button.type="button";button.className="button button--primary";button.textContent=label;button.addEventListener("click",handler);action.append(button)};
   if(game.phase==="bidding"){
     const bidder=bySeat[game.turnSeat]?.display_name||"Player";message.textContent=game.turnSeat===game.mySeat?"Choose how many packs you will win.":`Waiting for ${bidder} to bid…`;action.append(message);
-    if(game.turnSeat===game.mySeat){const choices=document.createElement("div");choices.className="bid-choices";for(let bid=0;bid<=game.handSize;bid+=1){const button=document.createElement("button");button.type="button";button.textContent=bid;button.addEventListener("click",()=>onBid(bid));choices.append(button)}action.append(choices)}
+    if(game.turnSeat===game.mySeat){
+      const choices=document.createElement("div");choices.className="bid-choices";
+      const confirm=document.createElement("button");confirm.type="button";confirm.className="button button--primary bid-confirm";
+      const updateBid=()=>{choices.querySelectorAll("button").forEach(button=>button.classList.toggle("bid-choice--selected",Number(button.dataset.bid)===selectedBid));confirm.disabled=selectedBid===null;confirm.textContent=selectedBid===null?"Select your bid":`Confirm bid of ${selectedBid}`};
+      for(let bid=0;bid<=game.handSize;bid+=1){const button=document.createElement("button");button.type="button";button.dataset.bid=bid;button.textContent=bid;button.addEventListener("click",()=>{selectedBid=bid;updateBid()});choices.append(button)}
+      confirm.addEventListener("click",()=>{if(selectedBid!==null){const bid=selectedBid;selectedBid=null;onBid(bid)}});
+      action.append(choices,confirm);updateBid();
+    }
   }else if(game.phase==="playing"){
     message.textContent=game.turnSeat===game.mySeat?(game.trickNumber===0?"Your turn · you must play trump if you have one.":"Your turn · choose a legal card."):`Waiting for ${bySeat[game.turnSeat]?.display_name||"player"}…`;action.append(message);
   }else if(game.phase==="trick_complete"){
@@ -70,8 +83,20 @@ export function renderGame({game,players,roomCode,onBid,onPlay,onContinue,onNext
 
   const hand=document.querySelector("#my-hand");hand.replaceChildren();
   const cards=(game.hand||[]).map(parseCard).sort((a,b)=>SUIT_ORDER[a.suit]-SUIT_ORDER[b.suit]||RANK_ORDER[a.rank]-RANK_ORDER[b.rank]);
-  cards.forEach(card=>hand.append(cardElement(card,{disabled:!legalCard(game,card),onClick:()=>onPlay(card.value)})));
-  document.querySelector("#hand-help").textContent=`${cards.length} card${cards.length===1?"":"s"}`;
+  const rowSize=cards.length>6?Math.ceil(cards.length/2):cards.length||1;
+  for(let start=0;start<cards.length;start+=rowSize){
+    const row=document.createElement("div");row.className="card-row";
+    cards.slice(start,start+rowSize).forEach((card,index)=>{
+      const playable=legalCard(game,card);
+      const button=cardElement(card,{disabled:!playable,selected:selectedCard===card.value,onClick:()=>{
+        if(selectedCard===card.value){selectedCard=null;onPlay(card.value);return}
+        selectedCard=card.value;hand.querySelectorAll(".playing-card--selected").forEach(item=>item.classList.remove("playing-card--selected"));button.classList.add("playing-card--selected");
+      }});
+      button.style.zIndex=index+1;row.append(button);
+    });
+    hand.append(row);
+  }
+  document.querySelector("#hand-help").textContent=game.turnSeat===game.mySeat&&game.phase==="playing"?"Tap once to select · again to play":`${cards.length} card${cards.length===1?"":"s"}`;
 
   const tally=document.querySelector("#tally-table");
   const headings=ordered.map(player=>`<th colspan="3">${escapeHtml(player.display_name)}</th>`).join("");
