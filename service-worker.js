@@ -1,12 +1,14 @@
-const CACHE_NAME = "trumps-shell-v2";
+const CACHE_NAME = "trumps-shell-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./css/app.css",
   "./css/lobby.css",
+  "./css/game.css",
   "./js/app.js",
   "./js/config.js",
   "./js/lobby.js",
+  "./js/game-ui.js",
   "./js/supabase.js",
   "./js/ui.js",
   "./manifest.webmanifest",

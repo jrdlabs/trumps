@@ -1,5 +1,6 @@
 import { ensureAnonymousSession } from "./supabase.js";
-import { createRoom, getLobby, getMyTables, joinRoom, kickPlayer, leaveRoom, normalizeRoomCode, subscribeToLobby, touchPresence } from "./lobby.js";
+import { continueGame, createRoom, getGame, getLobby, getMyTables, joinRoom, kickPlayer, leaveRoom, nextHand, normalizeRoomCode, playCard, startGame, submitBid, subscribeToLobby, touchPresence } from "./lobby.js";
+import { renderGame } from "./game-ui.js";
 import { friendlyError, renderLobby, renderTables, setBusy, showToast, showView } from "./ui.js";
 
 let session;
@@ -7,6 +8,7 @@ let currentRoom;
 let unsubscribeLobby;
 let presenceTimer;
 let installPrompt;
+let gameActionBusy = false;
 
 const createForm = document.querySelector("#create-form");
 const joinForm = document.querySelector("#join-form");
@@ -17,6 +19,22 @@ async function refreshLobby() {
   if (!currentRoom) return;
   try {
     const lobby = await getLobby(currentRoom.id);
+    if (lobby.room.status === "playing") {
+      const game = await getGame(currentRoom.id);
+      showView("game");
+      renderGame({
+        game,
+        players: lobby.players,
+        roomCode: lobby.room.code,
+        onBid: (bid) => runGameAction(() => submitBid(currentRoom.id, bid)),
+        onPlay: (card) => runGameAction(() => playCard(currentRoom.id, card)),
+        onContinue: () => runGameAction(() => continueGame(currentRoom.id)),
+        onNextHand: () => runGameAction(() => nextHand(currentRoom.id)),
+        onRestart: () => runGameAction(() => startGame(currentRoom.id)),
+      });
+      return;
+    }
+    showView("lobby");
     renderLobby({
       ...lobby,
       currentUserId: session.user.id,
@@ -30,6 +48,19 @@ async function refreshLobby() {
     currentRoom = null;
     await showDashboard();
     showToast(friendlyError(error));
+  }
+}
+
+async function runGameAction(action) {
+  if (gameActionBusy) return;
+  gameActionBusy = true;
+  try {
+    await action();
+    await refreshLobby();
+  } catch (error) {
+    showToast(friendlyError(error));
+  } finally {
+    gameActionBusy = false;
   }
 }
 
@@ -129,8 +160,21 @@ document.querySelector("#leave-room").addEventListener("click", async () => {
 
 document.querySelector("#back-to-tables").addEventListener("click", showDashboard);
 
-document.querySelector("#start-game").addEventListener("click", () => {
-  showToast("Game start is the next build milestone.");
+document.querySelector("#start-game").addEventListener("click", () => runGameAction(() => startGame(currentRoom.id)));
+document.querySelector("#game-back").addEventListener("click", showDashboard);
+
+document.querySelector("#game-tab").addEventListener("click", () => {
+  document.querySelector("#table-panel").hidden = false;
+  document.querySelector("#tally-panel").hidden = true;
+  document.querySelector("#game-tab").classList.add("game-tab--active");
+  document.querySelector("#tally-tab").classList.remove("game-tab--active");
+});
+
+document.querySelector("#tally-tab").addEventListener("click", () => {
+  document.querySelector("#table-panel").hidden = true;
+  document.querySelector("#tally-panel").hidden = false;
+  document.querySelector("#game-tab").classList.remove("game-tab--active");
+  document.querySelector("#tally-tab").classList.add("game-tab--active");
 });
 
 initialize();

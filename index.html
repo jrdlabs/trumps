@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" href="./icons/icon-192.png" />
     <link rel="stylesheet" href="./css/app.css" />
     <link rel="stylesheet" href="./css/lobby.css" />
+    <link rel="stylesheet" href="./css/game.css" />
   </head>
   <body>
     <main class="app-shell">
@@ -85,6 +86,29 @@
         <button id="start-game" class="button button--primary" type="button" disabled>Start game</button>
         <button id="back-to-tables" class="button button--secondary" type="button">My tables</button>
         <button id="leave-room" class="button button--ghost" type="button">Leave room</button>
+      </section>
+
+      <section id="game-view" class="game" hidden>
+        <div class="game__topbar">
+          <div>
+            <p class="eyebrow">Room <span id="game-room-code">—</span></p>
+            <h2 id="game-hand-title">Hand 1</h2>
+          </div>
+          <button id="game-back" class="game__back" type="button">My tables</button>
+        </div>
+        <div id="scoreboard" class="scoreboard"></div>
+        <div class="game-tabs" role="tablist">
+          <button id="game-tab" class="game-tab game-tab--active" type="button">Table</button>
+          <button id="tally-tab" class="game-tab" type="button">Tally</button>
+        </div>
+        <div id="table-panel">
+          <div class="game-meta"><span id="game-dealer">Dealer —</span><span id="game-trump">Trump —</span></div>
+          <div id="trick-table" class="trick-table"></div>
+          <div id="game-action" class="game-action"></div>
+          <div class="hand-heading"><strong>Your hand</strong><span id="hand-help"></span></div>
+          <div id="my-hand" class="card-hand"></div>
+        </div>
+        <div id="tally-panel" hidden><div id="tally-table" class="tally-wrap"></div></div>
       </section>
 
       <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>

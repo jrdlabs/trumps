@@ -74,11 +74,43 @@ export async function kickPlayer(roomId, playerId) {
   if (error) throw error;
 }
 
+export async function startGame(roomId) {
+  const { error } = await supabase.rpc("trumps_start_game", { p_room_id: roomId });
+  if (error) throw error;
+}
+
+export async function getGame(roomId) {
+  const { data, error } = await supabase.rpc("trumps_get_game", { p_room_id: roomId });
+  if (error) throw error;
+  return data;
+}
+
+export async function submitBid(roomId, bid) {
+  const { error } = await supabase.rpc("trumps_bid", { p_room_id: roomId, p_bid: bid });
+  if (error) throw error;
+}
+
+export async function playCard(roomId, card) {
+  const { error } = await supabase.rpc("trumps_play_card", { p_room_id: roomId, p_card: card });
+  if (error) throw error;
+}
+
+export async function continueGame(roomId) {
+  const { error } = await supabase.rpc("trumps_continue", { p_room_id: roomId });
+  if (error) throw error;
+}
+
+export async function nextHand(roomId) {
+  const { error } = await supabase.rpc("trumps_next_hand", { p_room_id: roomId });
+  if (error) throw error;
+}
+
 export function subscribeToLobby(roomId, onChange, onStatus) {
   const channel = supabase
     .channel(`trumps-lobby-${roomId}`)
     .on("postgres_changes", { event: "*", schema: "public", table: "trumps_players", filter: `room_id=eq.${roomId}` }, onChange)
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "trumps_rooms", filter: `id=eq.${roomId}` }, onChange)
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "trumps_game_state", filter: `room_id=eq.${roomId}` }, onChange)
     .subscribe(onStatus);
 
   return () => supabase.removeChannel(channel);
