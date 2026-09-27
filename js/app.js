@@ -211,6 +211,10 @@ document.querySelector("#tricks-tab").addEventListener("click", () => {
   document.querySelector("#tally-tab").classList.remove("game-tab--active");
 });
 
+document.querySelector("#my-won-pile").addEventListener("click", () => {
+  document.querySelector("#tricks-tab").click();
+});
+
 document.querySelector("#tally-tab").addEventListener("click", () => {
   document.querySelector("#table-panel").hidden = true;
   document.querySelector("#tricks-panel").hidden = true;
