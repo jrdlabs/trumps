@@ -121,7 +121,7 @@ function scheduleAutomaticAdvance(game) {
   clearTimeout(autoAdvanceTimer);
   scheduledTrickRevision = game.revision;
   const completedAt = Date.parse(game.trickCompletedAt || "");
-  const delay = Number.isFinite(completedAt) ? Math.max(0, completedAt + 5000 - Date.now()) : 5000;
+  const delay = Number.isFinite(completedAt) ? Math.max(0, completedAt + 6200 - Date.now()) : 5000;
   autoAdvanceTimer = setTimeout(async () => {
     if (!currentRoom || scheduledTrickRevision !== game.revision) return;
     try { await continueGame(currentRoom.id); }
