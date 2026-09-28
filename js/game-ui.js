@@ -162,7 +162,7 @@ function renderTally(game,players){
   const ordered=players.slice().sort((a,b)=>a.seat-b.seat);const tally=document.querySelector("#tally-table");
   const headings=ordered.map(player=>`<th class="player-group" colspan="3">${escapeHtml(player.display_name)}</th>`).join("");
   const subheads=ordered.map(()=>"<th class=\"player-start\">B</th><th>W</th><th>Pts</th>").join("");
-  const rows=(game.history||[]).map(row=>`<tr><td>${row.handSize}</td>${ordered.map(player=>`<td class="player-start">${row.bids[player.seat]}</td><td>${row.won[player.seat]}</td><td>${row.scores[player.seat]>=0?"+":""}${row.scores[player.seat]}</td>`).join("")}</tr>`).join("");
+  const runningTotals=[0,0,0,0];const rows=(game.history||[]).map(row=>{for(let seat=0;seat<4;seat+=1)runningTotals[seat]+=row.scores[seat];return `<tr><td>${row.handSize}</td>${ordered.map(player=>`<td class="player-start">${row.bids[player.seat]}</td><td>${row.won[player.seat]}</td><td>${runningTotals[player.seat]>=0?"+":""}${runningTotals[player.seat]}</td>`).join("")}</tr>`}).join("");
   const totals=ordered.map(player=>`<td class="player-start" colspan="3"><strong>${game.totals[player.seat]}</strong></td>`).join("");
   tally.innerHTML=`<table><thead><tr><th>Cards</th>${headings}</tr><tr><th></th>${subheads}</tr></thead><tbody>${rows||`<tr><td colspan="13">No completed hands yet</td></tr>`}</tbody><tfoot><tr><td>Total</td>${totals}</tr></tfoot></table>`;
 }
