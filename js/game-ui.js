@@ -56,14 +56,14 @@ function renderSeats(game,players,bySeat){
     const info=document.createElement("span");info.className="table-seat__info";
     const name=document.createElement("strong");name.textContent=player?.display_name||`Seat ${seat+1}`;
     const status=document.createElement("small");status.textContent=seat===game.turnSeat?"PLAY":"";
-    const bid=document.createElement("span");bid.className="table-seat__bid";bid.textContent=`Bid ${game.bids?.[seat]??"—"}`;info.append(name,status);item.append(avatar,info,bid);appendFacedownTricks(item,game.tricksWon?.[seat]??0);opponents.append(item);
+    const bid=document.createElement("span");bid.className="table-seat__bid";bid.textContent=`Bid ${game.bids?.[seat]??"—"}`;info.append(name,status);item.append(avatar,info,bid);appendFacedownTricks(item,game.tricksWon?.[seat]??0);if(seat===game.dealerSeat){const dealer=document.createElement("span");dealer.className="dealer-chip";dealer.textContent="D";dealer.title="Dealer";item.append(dealer)}opponents.append(item);
   }
 
   const self=document.querySelector("#my-seat-summary");self.replaceChildren();self.className=`my-seat-summary${game.turnSeat===game.mySeat?" my-seat-summary--turn":""}`;
   const label=document.createElement("strong");label.textContent="YOU";
   const bid=document.createElement("span");bid.innerHTML=`Bid <b>${game.bids?.[game.mySeat]??"—"}</b>`;
   const won=document.createElement("span");won.innerHTML=`Won <b>${game.tricksWon?.[game.mySeat]??0}</b>`;
-  self.append(label,bid,won);
+  self.append(label,bid,won);if(game.mySeat===game.dealerSeat){const dealer=document.createElement("span");dealer.className="dealer-chip dealer-chip--self";dealer.textContent="D";dealer.title="Dealer";self.append(dealer)}
 
   const pile=document.querySelector("#my-won-pile");pile.replaceChildren();
   const pileLabel=document.createElement("span");pileLabel.textContent="Your tricks";pile.append(pileLabel);
