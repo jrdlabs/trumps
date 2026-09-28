@@ -117,7 +117,7 @@ function renderAction(game,bySeat,me,onBid,onNextHand,onRestart){
   }else if(game.phase==="trick_complete"){
     const completedAt=Date.parse(game.trickCompletedAt||"");const remaining=Number.isFinite(completedAt)?completedAt+5000-Date.now():5000;const seconds=Math.max(0,Math.ceil(remaining/1000));
     message.textContent=remaining>0?`${bySeat[game.lastTrick.winner]?.display_name||"Player"} won · ${game.trickNumber+1===game.handSize?"Hand result":"next trick"} in ${seconds}s`:"Collecting trick…";action.append(message);
-    const countdown=document.createElement("div");countdown.className="trick-countdown";countdown.innerHTML="<i></i>";action.append(countdown);
+    const countdown=document.createElement("div");countdown.className="trick-countdown";const bar=document.createElement("i");const barRemaining=Math.max(0,Math.min(5000,remaining));bar.style.setProperty("--countdown-start",String(barRemaining/5000));bar.style.animationDuration=`${Math.max(1,barRemaining)}ms`;countdown.append(bar);action.append(countdown);
   }else if(game.phase==="hand_complete"){
     message.textContent="Hand complete. Scores have been added.";action.append(message);if(me?.is_host)addButton("Deal next hand",onNextHand);else message.textContent+=" Waiting for the host to deal.";
   }else if(game.phase==="game_complete"){
