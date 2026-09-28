@@ -26,3 +26,15 @@
 .dealer-chip{position:absolute;top:-9px;right:-7px;display:grid;place-items:center;width:21px;height:21px;color:#2b1d05;border:2px solid #ffe49a;border-radius:50%;background:linear-gradient(145deg,#ffe185,#c88d22);box-shadow:0 3px 8px rgba(0,0,0,.4);font-size:9px;font-weight:1000}.dealer-chip--self{top:-10px;right:-8px}
 .table-seat--turn{animation:active-seat-glow 1.55s ease-in-out infinite}.my-seat-summary--turn{animation:active-seat-glow 1.55s ease-in-out infinite}
 @keyframes active-seat-glow{0%,100%{box-shadow:0 0 0 2px rgba(245,196,81,.12),0 0 15px rgba(245,196,81,.12)}50%{box-shadow:0 0 0 3px rgba(245,196,81,.25),0 0 27px rgba(245,196,81,.32)}}
+
+/* Table atmosphere and score celebrations */
+.table-surface{border-color:rgba(212,158,74,.42);box-shadow:inset 0 0 0 7px rgba(45,27,15,.72),inset 0 0 0 9px rgba(194,137,55,.18),inset 0 0 54px rgba(0,0,0,.42),0 16px 34px rgba(0,0,0,.36)}
+.table-surface::after{content:"";position:absolute;inset:1px;z-index:9;pointer-events:none;border:6px solid rgba(70,42,22,.72);border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(240,190,99,.22),inset 0 0 12px rgba(0,0,0,.38)}
+.table-seat--exact,.my-seat-summary--exact{border-color:#f5c451;background:linear-gradient(135deg,rgba(69,51,10,.94),rgba(20,48,32,.94));animation:exact-bid-glow 1.8s ease-in-out 3}
+.table-seat--exact::after,.my-seat-summary--exact::after{content:"✓ Exact";position:absolute;right:5px;bottom:-8px;padding:2px 5px;color:#1b1608;border-radius:999px;background:#f5c451;box-shadow:0 2px 7px rgba(0,0,0,.3);font-size:7px;font-weight:1000;letter-spacing:.4px}
+.score-gain{width:max-content;margin:8px auto 10px;padding:5px 11px;color:#14200f;border-radius:999px;background:linear-gradient(180deg,#ffe79a,#e7b83d);box-shadow:0 5px 14px rgba(0,0,0,.28);font-size:17px;font-weight:1000;animation:score-gain-in .7s cubic-bezier(.2,.9,.3,1.2) both}
+.score-gain--negative{color:#fff;background:linear-gradient(180deg,#b75656,#7b2525)}
+.result-celebration i:nth-child(n+9){display:none}
+@keyframes exact-bid-glow{0%,100%{box-shadow:0 0 10px rgba(245,196,81,.14)}50%{box-shadow:0 0 0 3px rgba(245,196,81,.28),0 0 28px rgba(245,196,81,.42)}}
+@keyframes score-gain-in{from{opacity:0;transform:translateY(12px) scale(.72)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.table-seat--exact,.my-seat-summary--exact,.score-gain{animation:none}}

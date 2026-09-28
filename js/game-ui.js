@@ -10,6 +10,25 @@ let lastAnimatedHandKey=null;
 let lastPlaySignature="";
 let collectionTimer;
 let actionCountdownTimer;
+let tableAudioContext;
+let lastSensoryPlaySignature="";
+function prepareTableAudio(){
+  if(tableAudioContext)return;
+  const AudioContext=window.AudioContext||window.webkitAudioContext;
+  if(AudioContext)tableAudioContext=new AudioContext();
+}
+document.addEventListener("pointerdown",()=>{prepareTableAudio();if(tableAudioContext?.state==="suspended")tableAudioContext.resume().catch(()=>{})},{once:true});
+function cardPlacementFeedback(){
+  if(tableAudioContext?.state==="running"){
+    const now=tableAudioContext.currentTime;
+    const oscillator=tableAudioContext.createOscillator();
+    const gain=tableAudioContext.createGain();
+    oscillator.type="sine";oscillator.frequency.setValueAtTime(185,now);oscillator.frequency.exponentialRampToValueAtTime(115,now+.055);
+    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.035,now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+.07);
+    oscillator.connect(gain).connect(tableAudioContext.destination);oscillator.start(now);oscillator.stop(now+.075);
+  }
+  if(navigator.vibrate)navigator.vibrate(12);
+}
 
 function legalCard(game,card){
   if(game.phase!=="playing"||game.turnSeat!==game.mySeat)return false;
@@ -51,7 +70,8 @@ function renderSeats(game,players,bySeat){
   for(let seat=0;seat<4;seat+=1){
     if(seat===game.mySeat)continue;
     const player=bySeat[seat];const position=relativePosition(game.mySeat,seat);
-    const item=document.createElement("div");item.className=`table-seat table-seat--${position}${seat===game.turnSeat?" table-seat--turn":""}`;
+    const exactBid=(game.phase==="hand_complete"||game.phase==="game_complete")&&game.bids?.[seat]===game.tricksWon?.[seat];
+    const item=document.createElement("div");item.className=`table-seat table-seat--${position}${seat===game.turnSeat?" table-seat--turn":""}${exactBid?" table-seat--exact":""}`;
     const avatar=document.createElement("span");avatar.className="table-seat__avatar";avatar.textContent=initials(player?.display_name);
     const info=document.createElement("span");info.className="table-seat__info";
     const name=document.createElement("strong");name.textContent=player?.display_name||`Seat ${seat+1}`;
@@ -59,7 +79,7 @@ function renderSeats(game,players,bySeat){
     const bid=document.createElement("span");bid.className="table-seat__bid";bid.textContent=`Bid ${game.bids?.[seat]??"—"}`;info.append(name,status);item.append(avatar,info,bid);appendFacedownTricks(item,game.tricksWon?.[seat]??0);if(seat===game.dealerSeat){const dealer=document.createElement("span");dealer.className="dealer-chip";dealer.textContent="D";dealer.title="Dealer";item.append(dealer)}opponents.append(item);
   }
 
-  const self=document.querySelector("#my-seat-summary");self.replaceChildren();self.className=`my-seat-summary${game.turnSeat===game.mySeat?" my-seat-summary--turn":""}`;
+  const self=document.querySelector("#my-seat-summary");self.replaceChildren();const selfExact=(game.phase==="hand_complete"||game.phase==="game_complete")&&game.bids?.[game.mySeat]===game.tricksWon?.[game.mySeat];self.className=`my-seat-summary${game.turnSeat===game.mySeat?" my-seat-summary--turn":""}${selfExact?" my-seat-summary--exact":""}`;
   const label=document.createElement("strong");label.textContent="YOU";
   const bid=document.createElement("span");bid.innerHTML=`Bid <b>${game.bids?.[game.mySeat]??"—"}</b>`;
   const won=document.createElement("span");won.innerHTML=`Won <b>${game.tricksWon?.[game.mySeat]??0}</b>`;
@@ -81,6 +101,8 @@ function renderTableCards(game){
     if(play.seat===newestSeat)card.classList.add("table-played-card--enter");
     trick.append(card);
   }
+  if(playSignature&&playSignature!==lastSensoryPlaySignature){cardPlacementFeedback();lastSensoryPlaySignature=playSignature}
+  if(!playSignature&&game.phase!=="trick_complete")lastSensoryPlaySignature="";
   lastPlaySignature=playSignature;
 
   clearTimeout(collectionTimer);
@@ -124,7 +146,10 @@ function renderAction(game,bySeat,me,onBid,onNextHand,onLeave,onClose){
     updateCountdown();action.append(message);actionCountdownTimer=setInterval(updateCountdown,200);
     const countdown=document.createElement("div");countdown.className="trick-countdown";const bar=document.createElement("i");const initialRemaining=Number.isFinite(completedAt)?completedAt+5000-Date.now():5000;const barRemaining=Math.max(0,Math.min(5000,initialRemaining));bar.style.setProperty("--countdown-start",String(barRemaining/5000));bar.style.animationDuration=`${Math.max(1,barRemaining)}ms`;countdown.append(bar);action.append(countdown);
   }else if(game.phase==="hand_complete"){
-    message.textContent="Hand complete. Scores have been added.";action.append(message);if(me?.is_host)addButton("Deal next hand",onNextHand);else message.textContent+=" Waiting for the host to deal.";
+    message.textContent="Hand complete. Scores have been added.";action.append(message);
+    const latest=game.history?.at(-1);const gained=latest?.scores?.[game.mySeat];
+    if(Number.isFinite(gained)){const scoreGain=document.createElement("div");scoreGain.className=`score-gain${gained<0?" score-gain--negative":""}`;scoreGain.textContent=`${gained>=0?"+":""}${gained} points`;action.append(scoreGain)}
+    if(me?.is_host)addButton("Deal next hand",onNextHand);else message.textContent+=" Waiting for the host to deal.";
   }else if(game.phase==="game_complete"){
     action.classList.add("game-action--results");
     const rankings=Object.values(bySeat).map(player=>({name:player.display_name,score:game.totals[player.seat]})).sort((a,b)=>b.score-a.score);
