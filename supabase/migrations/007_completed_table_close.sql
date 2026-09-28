@@ -19,5 +19,6 @@ returns void language sql security invoker set search_path = '' as $$
 $$;
 
 revoke all on function private.trumps_close_completed_room_impl(uuid) from public,anon,authenticated;
+grant execute on function private.trumps_close_completed_room_impl(uuid) to authenticated;
 revoke all on function public.trumps_close_completed_room(uuid) from public,anon;
 grant execute on function public.trumps_close_completed_room(uuid) to authenticated;
