@@ -1,5 +1,5 @@
 import { ensureAnonymousSession } from "./supabase.js";
-import { continueGame, createRoom, getGame, getLobby, getMyTables, joinRoom, kickPlayer, leaveRoom, nextHand, normalizeRoomCode, playCard, startGame, submitBid, subscribeToLobby, touchPresence } from "./lobby.js";
+import { continueGame, createRoom, getAdminHistory, getGame, getLobby, getMyTables, joinRoom, kickPlayer, leaveRoom, nextHand, normalizeRoomCode, playCard, startGame, submitBid, subscribeToLobby, touchPresence } from "./lobby.js";
 import { renderGame } from "./game-ui.js";
 import { friendlyError, renderLobby, renderTables, setBusy, showToast, showView } from "./ui.js";
 
@@ -18,6 +18,59 @@ const createForm = document.querySelector("#create-form");
 const joinForm = document.querySelector("#join-form");
 const joinCode = document.querySelector("#join-code");
 const connectionBadge = document.querySelector("#connection-badge");
+
+const formatDate = value => new Intl.DateTimeFormat("en-JM", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+const formatDuration = seconds => `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+
+function renderHistory(data) {
+  const stats = [
+    ["Completed games", data.summary.completedGames],
+    ["Games started", data.summary.gamesStarted],
+    ["Rooms created", data.summary.roomsCreated],
+    ["Player joins", data.summary.playerJoins],
+  ];
+  const statsWrap = document.querySelector("#history-stats");
+  statsWrap.replaceChildren(...stats.map(([label, value]) => {
+    const item = document.createElement("div"); item.className = "history-stat";
+    const number = document.createElement("strong"); number.textContent = value;
+    const caption = document.createElement("span"); caption.textContent = label;
+    item.append(number, caption); return item;
+  }));
+  document.querySelector("#history-count").textContent = `${data.games.length} archived`;
+  const games = document.querySelector("#history-games"); games.replaceChildren();
+  if (!data.games.length) {
+    const empty = document.createElement("p"); empty.className = "history-empty";
+    empty.textContent = "Completed games will appear here."; games.append(empty); return;
+  }
+  data.games.forEach(game => {
+    const details = document.createElement("details"); details.className = "history-game";
+    const summary = document.createElement("summary");
+    const top = document.createElement("div"); top.className = "history-game__top";
+    const room = document.createElement("strong"); room.textContent = `Room ${game.roomCode}`;
+    const when = document.createElement("small"); when.textContent = formatDate(game.completedAt);
+    top.append(room, when);
+    const winner = document.createElement("span"); winner.className = "history-winner";
+    winner.textContent = `🏆 ${game.winnerNames.join(" & ")} · ${game.winningScore} points`;
+    summary.append(top, winner);
+    const body = document.createElement("div"); body.className = "history-game__body";
+    const meta = document.createElement("p"); meta.className = "muted";
+    meta.textContent = `Game ${game.gameNumber} · ${formatDuration(game.durationSeconds)} · ${game.hands.length} hands`;
+    const players = document.createElement("div"); players.className = "history-players";
+    [...game.players].sort((a,b)=>b.score-a.score).forEach((player,index) => {
+      const row = document.createElement("div"); row.className = "history-player";
+      const name = document.createElement("span"); name.textContent = `${index+1}. ${player.name}`;
+      const score = document.createElement("strong"); score.textContent = player.score;
+      row.append(name,score); players.append(row);
+    });
+    const table = document.createElement("table"); table.className = "history-hands";
+    const names = [...game.players].sort((a,b)=>a.seat-b.seat);
+    const head = document.createElement("thead"); const hr = document.createElement("tr");
+    ["Cards", ...names.map(player=>player.name)].forEach(label=>{const th=document.createElement("th");th.textContent=label;hr.append(th)});head.append(hr);
+    const tbody = document.createElement("tbody");
+    game.hands.forEach(hand=>{const tr=document.createElement("tr");const size=document.createElement("td");size.textContent=hand.handSize;tr.append(size);names.forEach(player=>{const td=document.createElement("td");td.textContent=`${hand.scores[player.seat]>=0?"+":""}${hand.scores[player.seat]}`;tr.append(td)});tbody.append(tr)});
+    table.append(head,tbody); body.append(meta,players,table); details.append(summary,body); games.append(details);
+  });
+}
 
 async function refreshLobby() {
   if (!currentRoom || refreshInFlight) return;
@@ -192,6 +245,26 @@ document.querySelector("#back-to-tables").addEventListener("click", showDashboar
 
 document.querySelector("#start-game").addEventListener("click", () => runGameAction(() => startGame(currentRoom.id)));
 document.querySelector("#game-back").addEventListener("click", showDashboard);
+
+document.querySelector("#open-history").addEventListener("click", () => {
+  document.querySelector("#history-login").hidden = false;
+  document.querySelector("#history-content").hidden = true;
+  showView("history");
+});
+document.querySelector("#history-back").addEventListener("click", showDashboard);
+document.querySelector("#history-login").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const accessKey = new FormData(form).get("accessKey");
+  setBusy(form, true);
+  try {
+    renderHistory(await getAdminHistory(accessKey));
+    form.hidden = true;
+    document.querySelector("#history-content").hidden = false;
+    form.reset();
+  } catch (error) { showToast(friendlyError(error)); }
+  finally { setBusy(form, false); }
+});
 
 document.querySelector("#game-tab").addEventListener("click", () => {
   document.querySelector("#table-panel").hidden = false;

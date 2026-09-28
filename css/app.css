@@ -74,3 +74,30 @@ input::placeholder { color: #85968a; }
 .table-card__details strong, .table-card__details small { display: block; }
 .table-card__details small { margin-top: 3px; color: var(--muted); }
 .table-card__arrow { color: var(--gold); font-size: 22px; }
+
+.owner-history-link, .history-back { border: 0; color: var(--muted); background: transparent; cursor: pointer; }
+.owner-history-link { display: block; margin: 18px auto -6px; padding: 8px; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.history-heading, .history-subheading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.history-heading h2 { margin: 5px 0 0; font-family: Georgia, serif; font-size: 30px; }
+.history-back { padding: 8px; }
+.history-stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 9px; margin: 22px 0; }
+.history-stat { padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.045); }
+.history-stat strong, .history-stat span { display: block; }
+.history-stat strong { color: var(--gold); font-size: 24px; }
+.history-stat span { margin-top: 3px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.history-subheading h3 { margin: 0; font-family: Georgia,serif; font-size: 21px; }
+.history-subheading span { color: var(--muted); font-size: 12px; }
+.history-games { display: grid; gap: 10px; margin-top: 12px; }
+.history-game { border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.04); overflow: hidden; }
+.history-game summary { padding: 14px; cursor: pointer; list-style: none; }
+.history-game summary::-webkit-details-marker { display: none; }
+.history-game__top, .history-player { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.history-game__top small { color: var(--muted); }
+.history-winner { display: block; margin-top: 5px; color: var(--gold); font-size: 13px; font-weight: 800; }
+.history-game__body { padding: 0 14px 14px; border-top: 1px solid var(--line); }
+.history-players { display: grid; gap: 5px; margin: 12px 0; }
+.history-player { color: var(--muted); font-size: 13px; }
+.history-player strong { color: var(--ink); }
+.history-hands { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 10px; }
+.history-hands th, .history-hands td { padding: 5px 2px; border: 1px solid rgba(255,255,255,.1); text-align: center; }
+.history-empty { padding: 28px 12px; color: var(--muted); text-align: center; }

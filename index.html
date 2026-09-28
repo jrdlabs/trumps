@@ -61,6 +61,24 @@
           <button class="button button--secondary" type="submit">Join game</button>
         </form>
         <button id="install-app" class="button button--install" type="button" hidden>Install Trumps app</button>
+        <button id="open-history" class="owner-history-link" type="button">Owner game history</button>
+      </section>
+
+      <section id="history-view" class="panel history-view" hidden>
+        <div class="history-heading">
+          <div><p class="eyebrow">Private owner view</p><h2>Game history</h2></div>
+          <button id="history-back" class="history-back" type="button">Back</button>
+        </div>
+        <form id="history-login" class="stack">
+          <label for="history-key">Owner key</label>
+          <input id="history-key" name="accessKey" type="password" autocomplete="current-password" required />
+          <button class="button button--primary" type="submit">Open history</button>
+        </form>
+        <div id="history-content" hidden>
+          <div id="history-stats" class="history-stats"></div>
+          <div class="history-subheading"><h3>Completed games</h3><span id="history-count"></span></div>
+          <div id="history-games" class="history-games"></div>
+        </div>
       </section>
 
       <section id="lobby-view" class="panel lobby" hidden>

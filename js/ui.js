@@ -1,4 +1,4 @@
-const views = ["loading", "home", "lobby", "game"];
+const views = ["loading", "home", "lobby", "game", "history"];
 let toastTimer;
 
 export function showView(name) {

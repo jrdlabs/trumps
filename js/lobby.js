@@ -105,6 +105,12 @@ export async function nextHand(roomId) {
   if (error) throw error;
 }
 
+export async function getAdminHistory(accessKey) {
+  const { data, error } = await supabase.rpc("trumps_admin_history", { p_access_key: accessKey });
+  if (error) throw error;
+  return data;
+}
+
 export function subscribeToLobby(roomId, onChange, onStatus) {
   const channel = supabase
     .channel(`trumps-lobby-${roomId}`)
