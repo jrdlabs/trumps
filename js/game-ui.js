@@ -100,7 +100,7 @@ function renderTableCards(game){
   }
 }
 
-function renderAction(game,bySeat,me,onBid,onNextHand,onRestart){
+function renderAction(game,bySeat,me,onBid,onNextHand,onLeave,onClose){
   const action=document.querySelector("#game-action");
   const trickKey=game.phase==="trick_complete"?`${game.handIndex}:${game.trickNumber}:${game.trickCompletedAt}`:"";
   if(trickKey&&action.dataset.trickKey===trickKey)return;
@@ -126,7 +126,20 @@ function renderAction(game,bySeat,me,onBid,onNextHand,onRestart){
   }else if(game.phase==="hand_complete"){
     message.textContent="Hand complete. Scores have been added.";action.append(message);if(me?.is_host)addButton("Deal next hand",onNextHand);else message.textContent+=" Waiting for the host to deal.";
   }else if(game.phase==="game_complete"){
-    const rankings=Object.values(bySeat).map(player=>({name:player.display_name,score:game.totals[player.seat]})).sort((a,b)=>b.score-a.score);message.textContent=`🏆 ${rankings[0].name} wins with ${rankings[0].score} points!`;action.append(message);if(me?.is_host)addButton("Play another game",onRestart);
+    action.classList.add("game-action--results");
+    const rankings=Object.values(bySeat).map(player=>({name:player.display_name,score:game.totals[player.seat]})).sort((a,b)=>b.score-a.score);
+    const topScore=rankings[0]?.score??0;const winners=rankings.filter(player=>player.score===topScore);
+    const celebration=document.createElement("div");celebration.className="result-celebration";celebration.setAttribute("aria-hidden","true");
+    for(let index=0;index<8;index+=1){const spark=document.createElement("i");spark.style.setProperty("--spark",index);celebration.append(spark)}
+    const crown=document.createElement("div");crown.className="result-crown";crown.textContent="♛";
+    const title=document.createElement("h3");title.className="result-title";title.textContent=winners.length>1?"It’s a tie!":`${winners[0].name} wins!`;
+    const subtitle=document.createElement("p");subtitle.className="result-subtitle";subtitle.textContent=winners.length>1?`${winners.map(player=>player.name).join(" & ")} · ${topScore} points`:`${topScore} points`;
+    const list=document.createElement("div");list.className="result-rankings";
+    rankings.forEach((player,index)=>{const row=document.createElement("div");row.className=`result-rank${player.score===topScore?" result-rank--winner":""}`;const place=document.createElement("span");place.textContent=`#${index+1} ${player.name}`;const score=document.createElement("strong");score.textContent=player.score;row.append(place,score);list.append(row)});
+    const buttons=document.createElement("div");buttons.className="result-actions";
+    const leave=document.createElement("button");leave.type="button";leave.className="button button--secondary";leave.textContent="Leave table";leave.addEventListener("click",onLeave);buttons.append(leave);
+    if(me?.is_host){const close=document.createElement("button");close.type="button";close.className="button result-close";close.textContent="Close table for everyone";close.addEventListener("click",onClose);buttons.append(close)}
+    action.append(celebration,crown,title,subtitle,list,buttons);
   }
 }
 
@@ -167,12 +180,12 @@ function renderTally(game,players){
   tally.innerHTML=`<table><thead><tr><th>Cards</th>${headings}</tr><tr><th></th>${subheads}</tr></thead><tbody>${rows||`<tr><td colspan="13">No completed hands yet</td></tr>`}</tbody><tfoot><tr><td>Total</td>${totals}</tr></tfoot></table>`;
 }
 
-export function renderGame({game,players,roomCode,onBid,onPlay,onNextHand,onRestart}){
+export function renderGame({game,players,roomCode,onBid,onPlay,onNextHand,onLeave,onClose}){
   if(lastRevision!==game.revision){selectedBid=null;selectedCard=null;lastRevision=game.revision}
   const bySeat=Object.fromEntries(players.map(player=>[player.seat,player]));const me=bySeat[game.mySeat];
   document.querySelector("#game-room-code").textContent=roomCode;
   document.querySelector("#game-hand-title").textContent=`Hand ${game.handIndex+1} of 22 · ${game.handSize} cards`;
   document.querySelector("#game-dealer").textContent=`Dealer: ${bySeat[game.dealerSeat]?.display_name||"—"}`;
   const trump=document.querySelector("#game-trump");trump.replaceChildren();const label=document.createElement("span");label.textContent="Trump";trump.append(label);if(game.trumpCard)trump.append(cardElement(parseCard(game.trumpCard),{small:true,disabled:true}));
-  renderSeats(game,players,bySeat);renderTableCards(game);renderAction(game,bySeat,me,onBid,onNextHand,onRestart);renderHand(game,roomCode,onPlay);renderPrivateTricks(game);renderTally(game,players);
+  renderSeats(game,players,bySeat);renderTableCards(game);renderAction(game,bySeat,me,onBid,onNextHand,onLeave,onClose);renderHand(game,roomCode,onPlay);renderPrivateTricks(game);renderTally(game,players);
 }

@@ -1,5 +1,5 @@
 import { ensureAnonymousSession } from "./supabase.js";
-import { continueGame, createRoom, getAdminHistory, getGame, getLobby, getMyTables, joinRoom, kickPlayer, leaveRoom, nextHand, normalizeRoomCode, playCard, startGame, submitBid, subscribeToLobby, touchPresence } from "./lobby.js";
+import { closeCompletedRoom, continueGame, createRoom, getAdminHistory, getGame, getLobby, getMyTables, joinRoom, kickPlayer, leaveRoom, nextHand, normalizeRoomCode, playCard, startGame, submitBid, subscribeToLobby, touchPresence } from "./lobby.js";
 import { renderGame } from "./game-ui.js";
 import { friendlyError, renderLobby, renderTables, setBusy, showToast, showView } from "./ui.js";
 
@@ -87,7 +87,8 @@ async function refreshLobby() {
         onBid: (bid) => runGameAction(() => submitBid(currentRoom.id, bid)),
         onPlay: (card) => runGameAction(() => playCard(currentRoom.id, card)),
         onNextHand: () => runGameAction(() => nextHand(currentRoom.id)),
-        onRestart: () => runGameAction(() => startGame(currentRoom.id)),
+        onLeave: () => exitCompletedTable(false),
+        onClose: () => exitCompletedTable(true),
       });
       scheduleAutomaticAdvance(game);
       return;
@@ -141,6 +142,16 @@ async function runGameAction(action) {
   } finally {
     gameActionBusy = false;
   }
+}
+
+async function exitCompletedTable(closeTable) {
+  if (closeTable && !confirm("Close this table for everyone? The completed result will remain in game history.")) return;
+  try {
+    if (closeTable) await closeCompletedRoom(currentRoom.id);
+    else await leaveRoom(currentRoom.id);
+    await showDashboard();
+    showToast(closeTable ? "Table closed. Result archived." : "You left the completed table.");
+  } catch (error) { showToast(friendlyError(error)); }
 }
 
 async function showDashboard() {

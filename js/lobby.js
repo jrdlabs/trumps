@@ -111,6 +111,11 @@ export async function getAdminHistory(accessKey) {
   return data;
 }
 
+export async function closeCompletedRoom(roomId) {
+  const { error } = await supabase.rpc("trumps_close_completed_room", { p_room_id: roomId });
+  if (error) throw error;
+}
+
 export function subscribeToLobby(roomId, onChange, onStatus) {
   const channel = supabase
     .channel(`trumps-lobby-${roomId}`)
