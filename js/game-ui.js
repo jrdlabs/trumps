@@ -21,7 +21,7 @@ function legalCard(game,card){
 function cardElement(card,{small=false,disabled=false,selected=false,onClick}={}){
   const button=document.createElement("button");
   button.type="button";
-  button.className=`playing-card${card.suit==="H"||card.suit==="D"?" playing-card--red":""}${small?" playing-card--small":""}${selected?" playing-card--selected":""}`;
+  button.className=`playing-card${card.suit==="H"||card.suit==="D"?" playing-card--red":""}${card.suit==="C"?" playing-card--club":""}${small?" playing-card--small":""}${selected?" playing-card--selected":""}`;
   const rank=document.createElement("span");rank.textContent=card.rank;
   const suit=document.createElement("b");suit.textContent=SUIT_SYMBOL[card.suit];
   button.append(rank,suit);button.disabled=disabled;
@@ -55,7 +55,7 @@ function renderSeats(game,players,bySeat){
     const info=document.createElement("span");info.className="table-seat__info";
     const name=document.createElement("strong");name.textContent=player?.display_name||`Seat ${seat+1}`;
     const status=document.createElement("small");status.textContent=seat===game.turnSeat?"PLAY":"";
-    info.append(name,status);item.append(avatar,info);appendFacedownTricks(item,game.tricksWon?.[seat]??0);opponents.append(item);
+    const bid=document.createElement("span");bid.className="table-seat__bid";bid.textContent=`Bid ${game.bids?.[seat]??"—"}`;info.append(name,status);item.append(avatar,info,bid);appendFacedownTricks(item,game.tricksWon?.[seat]??0);opponents.append(item);
   }
 
   const self=document.querySelector("#my-seat-summary");self.replaceChildren();self.className=`my-seat-summary${game.turnSeat===game.mySeat?" my-seat-summary--turn":""}`;
