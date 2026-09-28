@@ -9,6 +9,7 @@ let lastRevision=null;
 let lastAnimatedHandKey=null;
 let lastPlaySignature="";
 let collectionTimer;
+let actionCountdownTimer;
 
 function legalCard(game,card){
   if(game.phase!=="playing"||game.turnSeat!==game.mySeat)return false;
@@ -100,7 +101,10 @@ function renderTableCards(game){
 }
 
 function renderAction(game,bySeat,me,onBid,onNextHand,onRestart){
-  const action=document.querySelector("#game-action");action.replaceChildren();
+  const action=document.querySelector("#game-action");
+  const trickKey=game.phase==="trick_complete"?`${game.handIndex}:${game.trickNumber}:${game.trickCompletedAt}`:"";
+  if(trickKey&&action.dataset.trickKey===trickKey)return;
+  clearInterval(actionCountdownTimer);action.dataset.trickKey=trickKey;action.replaceChildren();
   const message=document.createElement("p");
   const addButton=(label,handler)=>{const button=document.createElement("button");button.type="button";button.className="button button--primary";button.textContent=label;button.addEventListener("click",handler);action.append(button)};
   if(game.phase==="bidding"){
@@ -115,9 +119,10 @@ function renderAction(game,bySeat,me,onBid,onNextHand,onRestart){
   }else if(game.phase==="playing"){
     message.textContent=game.turnSeat===game.mySeat?(game.trickNumber===0?"Your turn · play trump if you have one.":"Your turn · choose a legal card."):`Waiting for ${bySeat[game.turnSeat]?.display_name||"player"}…`;action.append(message);
   }else if(game.phase==="trick_complete"){
-    const completedAt=Date.parse(game.trickCompletedAt||"");const remaining=Number.isFinite(completedAt)?completedAt+5000-Date.now():5000;const seconds=Math.max(0,Math.ceil(remaining/1000));
-    message.textContent=remaining>0?`${bySeat[game.lastTrick.winner]?.display_name||"Player"} won · ${game.trickNumber+1===game.handSize?"Hand result":"next trick"} in ${seconds}s`:"Collecting trick…";action.append(message);
-    const countdown=document.createElement("div");countdown.className="trick-countdown";const bar=document.createElement("i");const barRemaining=Math.max(0,Math.min(5000,remaining));bar.style.setProperty("--countdown-start",String(barRemaining/5000));bar.style.animationDuration=`${Math.max(1,barRemaining)}ms`;countdown.append(bar);action.append(countdown);
+    const completedAt=Date.parse(game.trickCompletedAt||"");
+    const updateCountdown=()=>{const remaining=Number.isFinite(completedAt)?completedAt+5000-Date.now():5000;const seconds=Math.max(0,Math.ceil(remaining/1000));message.textContent=remaining>0?`${bySeat[game.lastTrick.winner]?.display_name||"Player"} won · ${game.trickNumber+1===game.handSize?"Hand result":"next trick"} in ${seconds}s`:"Collecting trick…";};
+    updateCountdown();action.append(message);actionCountdownTimer=setInterval(updateCountdown,200);
+    const countdown=document.createElement("div");countdown.className="trick-countdown";const bar=document.createElement("i");const initialRemaining=Number.isFinite(completedAt)?completedAt+5000-Date.now():5000;const barRemaining=Math.max(0,Math.min(5000,initialRemaining));bar.style.setProperty("--countdown-start",String(barRemaining/5000));bar.style.animationDuration=`${Math.max(1,barRemaining)}ms`;countdown.append(bar);action.append(countdown);
   }else if(game.phase==="hand_complete"){
     message.textContent="Hand complete. Scores have been added.";action.append(message);if(me?.is_host)addButton("Deal next hand",onNextHand);else message.textContent+=" Waiting for the host to deal.";
   }else if(game.phase==="game_complete"){
