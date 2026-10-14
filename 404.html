@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Joel’s Game Room has moved</title>
+<script>
+const destination = new URL('https://jrdlabs.github.io/games/');
+const oldPath = location.pathname.replace(/^\/trumps\/?/, '');
+if (/^(trumps|dominoes|dominos)(\.html|\/)?$/.test(oldPath)) {
+destination.pathname += oldPath.startsWith('domin') ? 'dominoes.html' : 'trumps.html';
+} else if (new URLSearchParams(location.search).has('room')) {
+destination.pathname += 'trumps.html';
+}
+destination.search = location.search;
+destination.hash = location.hash;
+location.replace(destination.href);
+</script>
+<h1>Joel’s Game Room has moved</h1>
+<p><a href="https://jrdlabs.github.io/games/">Continue to the Game Room</a></p>
+</html>
