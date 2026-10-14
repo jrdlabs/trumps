@@ -1,20 +1,5 @@
 <!doctype html>
-<html lang="en">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Joel’s Game Room has moved</title>
-<script>
-const destination = new URL('https://jrdlabs.github.io/games/');
-const oldPath = location.pathname.replace(/^\/trumps\/?/, '');
-if (/^(trumps|dominoes|dominos)(\.html|\/)?$/.test(oldPath)) {
-destination.pathname += oldPath.startsWith('domin') ? 'dominoes.html' : 'trumps.html';
-} else if (new URLSearchParams(location.search).has('room')) {
-destination.pathname += 'trumps.html';
-}
-destination.search = location.search;
-destination.hash = location.hash;
-location.replace(destination.href);
-</script>
-<h1>Joel’s Game Room has moved</h1>
-<p><a href="https://jrdlabs.github.io/games/">Continue to the Game Room</a></p>
-</html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#171921"><title>Joel’s Game Room</title><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icons/favicon.svg"><link rel="apple-touch-icon" href="./icons/icon-192.png"><link rel="stylesheet" href="./css/hub.css"><link rel="stylesheet" href="./css/install.css"><script src="./js/install.js" defer></script></head>
+<body><main class="hub-shell"><nav class="hub-nav" aria-label="Game room"><div class="hub-mark" aria-hidden="true"><span>♠</span><span>⚅</span></div><button type="button" data-install>Install Game Room</button></nav><header class="hub-hero"><h1>Joel’s<br>Game Room<span>.</span></h1><p>Your friends. Your table.<br>Pick a game and settle in.</p></header><section class="hub-grid" aria-label="Choose a game"><a class="game-card" href="./trumps.html"><div class="game-art trumps-art" aria-hidden="true"><div class="playing-card">A<b>♠</b></div><div class="playing-card">K<b>♥</b></div></div><div class="game-copy"><span class="game-meta">Four players · Cards</span><h2>Trumps</h2><p>Call your packs. Make your bid.<br>Bring your best game to the table.</p><strong>Play Trumps <span aria-hidden="true">↗</span></strong></div></a><a class="game-card" href="./dominoes.html"><div class="game-art dominoes-art" aria-hidden="true"><div class="domino-piece"><span>⚅</span><span>⚅</span></div><div class="domino-piece"><span>⚃</span><span>⚂</span></div></div><div class="game-copy"><span class="game-meta">Four players · Double-six</span><h2>Dominoes</h2><p>Every man for himself.<br>Let the tiles do the talking.</p><strong>Play Dominoes <span aria-hidden="true">↗</span></strong></div></a></section><footer class="hub-footer">No account needed. Your browser remembers your seat.<span>Two games. One place to play. · <a href="./admin.html">Admin</a></span></footer></main><script>
+if(new URLSearchParams(location.search).has('room'))location.replace('./trumps.html'+location.search);
+</script></body></html>
